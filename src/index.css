@@ -27,9 +27,9 @@
 
 body {
   /* El fondo degradado de las capturas */
-  background: white;
+  background: linear-gradient(120deg, #a777e3, #4259b2); /* Restaurado */
   background-attachment: fixed;
-  color: var(--text-color); /* El texto por defecto ahora es claro */
+  color: var(--text-color-light); /* Texto por defecto claro */
   min-height: 100vh;
 }
 
@@ -58,7 +58,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  color: var(--text-color);
+  color: var(--text-color-light); /* Aseguramos texto claro aquí */
 }
 
 .logo-container {
@@ -76,6 +76,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-color); /* Color del emoji */
 }
 
 .logo-title {
@@ -222,17 +223,24 @@ body {
   border-radius: 8px;
   border-left: 5px solid;
 }
+.suggestion-card .card-content {
+  flex-grow: 1; /* Para que ocupe el espacio */
+  margin-right: 1rem; /* Espacio antes del botón */
+}
 .suggestion-card .card-content strong {
   font-size: 1.05rem;
 }
 .suggestion-card .card-content p {
   font-size: 0.9rem;
   color: #555;
+  margin-top: 0.25rem;
 }
 .suggestion-card .card-content span {
   font-size: 0.8rem;
   color: #777;
   font-weight: 500;
+  display: block; /* Para que esté debajo */
+  margin-top: 0.25rem;
 }
 
 /* Colores de las tarjetas */
@@ -252,6 +260,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   margin-left: 0.5rem;
+  white-space: nowrap; /* Evitar que el texto se divida */
 }
 
 .suggestion-card.breakfast .btn-add { background-color: var(--accent-green); }
@@ -271,21 +280,33 @@ body {
   background-color: var(--accent-blue);
   color: white;
   cursor: pointer;
+  margin-top: 1rem; /* Añadido espacio */
 }
 
 /* Widget "Mi Plan" */
+.my-plan-display {
+  white-space: pre-line;
+  margin-bottom: 1rem;
+  border: 1px solid #eee;
+  padding: 10px;
+  min-height: 50px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  text-align: left;
+}
 .plan-input-wrapper {
   position: relative;
   margin-top: 1rem;
 }
 .plan-textarea {
   width: 100%;
-  min-height: 200px;
+  min-height: 150px; /* Reducido un poco */
   border-radius: 8px;
   border: 1px solid var(--border-color);
   padding: 0.75rem;
   font-size: 0.9rem;
   resize: vertical;
+  padding-right: 55px; /* Espacio para el botón + */
 }
 .btn-add-plan {
   position: absolute;
@@ -299,6 +320,7 @@ body {
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
+  line-height: 40px; /* Centrar el + verticalmente */
 }
 
 /* Timer */
@@ -308,6 +330,7 @@ body {
   text-align: center;
   color: var(--text-color);
   margin: 1rem 0;
+  font-variant-numeric: tabular-nums; /* Para que los números no salten */
 }
 .timer-buttons {
   display: grid;
@@ -325,12 +348,14 @@ body {
   cursor: pointer;
 }
 .btn-timer.start { background-color: var(--accent-green); }
+.btn-timer.pause { background-color: var(--accent-orange); } /* Añadido */
 .btn-timer.reset { background-color: var(--accent-red); }
 
 .timer-presets {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
+  margin-top: 1rem; /* Añadido espacio */
 }
 .btn-preset {
   padding: 0.5rem;
@@ -343,4 +368,17 @@ body {
 }
 .btn-preset:hover {
   background-color: #f0f0f0;
+}
+
+/* Botón de Reinicio */
+.btn-reset-challenge {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--accent-red);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-block; /* Para centrar si el widget es text-align: center */
 }

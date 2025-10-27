@@ -2,7 +2,8 @@
   - Plan (1).docx
   - PDF-CHUY-ALMADA-RETO-45-DIAS-FULL_.pdf
 */
-// Datos de: Plan (1).docx [cite: 8]
+
+// Datos de: Plan (1).docx
 export const PLAN_PILAR_COMIDAS = [
   {
     dia: "Lunes",
@@ -56,8 +57,10 @@ export const PLAN_PILAR_COMIDAS = [
 ];
 
 
-// Datos de: PDF-CHUY-ALMADA-RETO-45-DIAS-FULL_.pdf [cite: 691, 710, 736, 764, 784, 812, 835, 862, 891, 913, 944, 962, 988, 1013, 1030, 1058, 1082, 1103, 1130, 1151, 1174, 1198, 1224, 1247, 1277, 1297, 1324, 1354, 1376, 1399, 1431, 1457, 1481, 1507, 1529, 1551, 1578, 1606, 1632, 1661, 1688, 1713, 1741, 1768, 1795]
+// Datos de: PDF-CHUY-ALMADA-RETO-45-DIAS-FULL_.pdf
 export const PLAN_TORO_RUTINAS = [
+  // *** Entrada del Día 1 añadida ***
+  { dia: 1, titulo: "Cardio y Pierna", ejercicios: "Jumping Jacks, Sentadillas de prisionero, Desplantes, Saltar la cuerda imaginaria" }, 
   { dia: 2, titulo: "Abdomen y Core", ejercicios: "Crunches, Plancha con toque de hombros, Abdominales en bicicleta, Plancha, Caminata del gusano, Russian twist" },
   { dia: 3, titulo: "Cardio y Golpes", ejercicios: "Rodillas a la cintura, Golpes al aire, Plancha comando, Jumping Jacks, Burpees" },
   { dia: 4, titulo: "Fuerza de Piernas y Abdomen", ejercicios: "Sentadillas tocando tobillos, Elevación de piernas, Plancha jumping jacks, Saltos a la cuerda imaginaria" },
