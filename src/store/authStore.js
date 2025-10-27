@@ -9,23 +9,31 @@ export const useAuthStore = create((set) => ({
 
   checkAuthState: () => {
     set({ isLoading: true });
+    // --- CORRECCIÓN ---
+    // Simplemente llamamos a la función sin guardar su resultado
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // --- INICIO DE LA MEJORA ---
-        // Guardamos más datos del usuario para el perfil
-        set({ 
-          user: { 
-            uid: user.uid, 
-            email: user.email, 
-            displayName: user.displayName, 
-            photoURL: user.photoURL // Guardamos la foto
-          }, 
-          isLoading: false 
-        });
-        // --- FIN DE LA MEJORA ---
-      } else {
-        set({ user: null, isLoading: false });
+    // --- FIN CORRECCIÓN ---
+      try {
+        if (user) {
+          set({ 
+            user: { 
+              uid: user.uid, 
+              email: user.email, 
+              displayName: user.displayName, 
+              photoURL: user.photoURL 
+            }, 
+            isLoading: false 
+          });
+        } else {
+          set({ user: null, isLoading: false }); 
+        }
+      } catch (error) {
+         console.error("Error dentro del callback onAuthStateChanged:", error);
+         set({ user: null, isLoading: false }); 
       }
+    }, (error) => {
+        console.error("Error en el observador onAuthStateChanged:", error);
+        set({ user: null, isLoading: false }); 
     });
   },
 
@@ -34,6 +42,7 @@ export const useAuthStore = create((set) => ({
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error al iniciar sesión con Google:", error);
+      set({ isLoading: false }); 
     }
   },
 
@@ -42,6 +51,7 @@ export const useAuthStore = create((set) => ({
       await signOut(auth);
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
+       set({ isLoading: false }); 
     }
   },
 }));

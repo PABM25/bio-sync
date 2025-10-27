@@ -116,9 +116,10 @@ body {
   border-radius: var(--radius-l);
   padding: 0.5rem;
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-start; /* Cambio de space-around a flex-start */
   box-shadow: 0 4px 12px var(--shadow-color);
   border: 1px solid var(--border-color);
+  overflow-x: auto; /* Permite scroll horizontal si hay muchos ítems */
 }
 .app-nav a {
   display: inline-block;
@@ -130,6 +131,9 @@ body {
   margin-right: 0.5rem;
   transition: background-color 0.2s, color 0.2s;
   white-space: nowrap;
+}
+.app-nav a:last-child {
+  margin-right: 0;
 }
 .app-nav a:hover {
   background-color: #3A3A3C; /* Gris más claro al pasar */
@@ -160,6 +164,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  color: var(--text-color-light); /* Títulos más brillantes */
 }
 
 /* 5. DISEÑOS DE GRID */
@@ -180,7 +185,7 @@ body {
   gap: 1.5rem;
 }
 @media (max-width: 1024px) {
-  .rutinas-grid {
+  .alimentacion-grid, .rutinas-grid {
     grid-template-columns: 1fr; /* Apilado en móvil */
   }
 }
@@ -206,7 +211,7 @@ body {
   color: var(--text-color-dim);
   font-size: 0.9rem;
   font-weight: 500;
-  margin-top: -10px;
+  margin-top: -10px; /* Ajusta según el tamaño de fuente */
 }
 
 /* 7. TARJETAS DE SUGERENCIAS (Rediseño Dark) */
@@ -236,6 +241,7 @@ body {
   font-size: 0.9rem;
   color: var(--text-color-dim);
   margin-top: 0.25rem;
+  line-height: 1.4;
 }
 
 /* Botones "Agregar" (estilo "pill") */
@@ -249,6 +255,7 @@ body {
   white-space: nowrap;
   font-size: 0.9rem;
 }
+/* Colores específicos para botones add */
 .suggestion-card.breakfast .btn-add, .btn-add-plan { background-color: var(--accent-green); }
 .suggestion-card.lunch .btn-add { background-color: var(--accent-blue); }
 .suggestion-card.dinner .btn-add { background-color: var(--accent-pink); }
@@ -286,13 +293,13 @@ body {
 }
 .plan-textarea {
   width: 100%;
-  min-height: 150px;
+  min-height: 150px; /* Aumentado */
   border-radius: 8px;
   border: 1px solid var(--border-color);
   padding: 0.75rem;
   font-size: 0.9rem;
   resize: vertical;
-  padding-right: 55px;
+  padding-right: 55px; /* Espacio para el botón + */
   background-color: var(--bg-color-dark);
   color: var(--text-color);
 }
@@ -307,11 +314,11 @@ body {
   height: 40px;
   border-radius: 8px;
   border: none;
-  /* background-color: var(--accent-blue); (Heredado de .breakfast .btn-add) */
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
-  line-height: 40px;
+  line-height: 40px; /* Centra el '+' */
+  /* El color de fondo se hereda de .suggestion-card.breakfast .btn-add */
 }
 
 /* 9. ESTILOS DE LISTAS (Checkboxes) */
@@ -320,7 +327,7 @@ body {
   padding: 0;
   margin: 0;
   text-align: left;
-  max-height: 400px;
+  max-height: 400px; /* Límite para scroll */
   overflow-y: auto;
 }
 .plan-list li {
@@ -332,12 +339,34 @@ body {
 .plan-list li:last-child {
   border-bottom: none;
 }
+/* Estilo del checkbox (Moderno) */
 .plan-list input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
   width: 20px;
   height: 20px;
+  border-radius: 4px;
+  border: 2px solid var(--border-color);
+  background-color: var(--bg-color-dark);
   margin-right: 12px;
   flex-shrink: 0;
   cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.plan-list input[type="checkbox"]:checked {
+  background-color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+/* Añade el "tick" */
+.plan-list input[type="checkbox"]:checked::after {
+  content: '✔';
+  position: absolute;
+  top: 0px;
+  left: 3px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
 }
 .plan-list label {
   font-size: 0.95rem;
@@ -382,7 +411,7 @@ body {
 
 .timer-presets {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* Más flexible */
   gap: 0.5rem;
   margin-top: 1rem;
 }
@@ -424,9 +453,9 @@ body {
   transition: background-color 0.2s;
 }
 .hydration-buttons button:hover {
-  background-color: #0056b3;
+  background-color: #0056b3; /* Azul más oscuro */
 }
-.hydration-buttons button:first-child {
+.hydration-buttons button:first-child { /* Botón de restar */
   background-color: var(--widget-bg);
   color: var(--accent-blue);
   border: 1px solid var(--accent-blue);
@@ -445,7 +474,7 @@ body {
   color: white;
   font-weight: 600;
   cursor: pointer;
-  display: inline-block;
+  display: inline-block; /* Para que no ocupe todo el ancho */
 }
 
 /* 13. ESTILOS MISCELÁNEOS */

@@ -29,6 +29,7 @@ function App() {
 
   // Muestra 'cargando' si la auth O el store de datos están cargando
   if (isAuthLoading || (user && isStoreLoading)) {
+    // Puedes reemplazar esto con un spinner más elegante si quieres
     return <h2 style={{ color: 'white', textAlign: 'center', marginTop: '5rem' }}>Cargando...</h2>;
   }
 
@@ -41,6 +42,7 @@ function App() {
         <main className="main-content">
           <Routes>
             {user ? (
+              // Rutas protegidas (si el usuario está logueado)
               <>
                 <Route path="/progreso" element={<ProgresoView />} />
                 <Route path="/alimentacion" element={<AlimentacionView />} />
@@ -48,16 +50,21 @@ function App() {
                 <Route path="/bienestar" element={<BienestarView />} />
                 <Route path="/perfil" element={<PerfilView />} /> {/* <-- 2. Añade la ruta */}
                 
+                {/* Redirección por defecto si está logueado */}
                 <Route path="/" element={<Navigate replace to="/progreso" />} />
+                {/* Si intenta ir a /auth estando logueado, redirige */}
                 <Route path="/auth" element={<Navigate replace to="/progreso" />} />
               </>
             ) : (
+              // Rutas públicas (si el usuario NO está logueado)
               <>
                 <Route path="/auth" element={<AuthView />} />
+                {/* Cualquier otra ruta lo redirige a la pantalla de login */}
                 <Route path="*" element={<Navigate replace to="/auth" />} />
               </>
             )}
             
+            {/* Ruta genérica para página no encontrada (aunque la lógica anterior cubre la mayoría) */}
             <Route path="*" element={<h2 style={{ color: 'white', textAlign: 'center', marginTop: '2rem' }}>Página no encontrada</h2>} />
           </Routes>
         </main>

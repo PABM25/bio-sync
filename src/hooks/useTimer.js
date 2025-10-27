@@ -1,5 +1,5 @@
 // src/hooks/useTimer.js
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react'; // Import useCallback
 
 // Función para formatear el tiempo (MM:SS)
 export const formatTime = (seconds) => {
@@ -9,29 +9,32 @@ export const formatTime = (seconds) => {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-// --- ¡NUEVO! Función de sonido ---
+// --- Función de sonido ---
 const playBeep = () => {
   try {
-    // Intenta usar la API de Audio moderna
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // Previene error si el usuario interactúa antes con la página
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    oscillator.type = 'sine'; // Tono simple
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // Frecuencia (A5)
-    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Volumen
+    oscillator.type = 'sine'; 
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); 
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); 
 
     oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5); // Duración de 0.5s
+    oscillator.stop(audioContext.currentTime + 0.5); 
   } catch (e) {
-    console.error("AudioContext no soportado.", e);
-    console.log("¡Tiempo!"); // Fallback para navegadores antiguos
+    console.error("AudioContext no soportado o error al reproducir:", e);
+    // Considera un fallback visual si el audio falla consistentemente
   }
 };
-// --- Fin de la función de sonido ---
+// --- Fin función de sonido ---
 
 
 export const useTimer = (initialMinutes = 5) => {
@@ -40,6 +43,11 @@ export const useTimer = (initialMinutes = 5) => {
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef(null);
 
+  // Limpia el intervalo al desmontar el componente
+  useEffect(() => {
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
@@ -47,11 +55,7 @@ export const useTimer = (initialMinutes = 5) => {
           if (prevSeconds <= 1) {
             clearInterval(intervalRef.current);
             setIsRunning(false);
-            
-            // --- INICIO DE LA MEJORA ---
-            playBeep(); // Llama a la función de sonido en lugar del alert
-            // --- FIN DE LA MEJORA ---
-
+            playBeep(); 
             return 0;
           }
           return prevSeconds - 1;
@@ -60,30 +64,32 @@ export const useTimer = (initialMinutes = 5) => {
     } else {
       clearInterval(intervalRef.current);
     }
+    // No necesita limpiar aquí porque ya lo hace el useEffect de desmontaje
+  }, [isRunning]); 
 
-    return () => clearInterval(intervalRef.current);
-  }, [isRunning]); // Dependencia sin cambios
-
-  const startPause = () => {
+  const startPause = useCallback(() => {
+    // No iniciar si ya está en 0
     if (!isRunning && secondsLeft <= 0) return; 
-    setIsRunning(!isRunning);
-  };
+    setIsRunning(prev => !prev);
+  }, [isRunning, secondsLeft]); // Dependencias: isRunning y secondsLeft
 
-  const reset = (minutes = initialMinutes) => {
+  const reset = useCallback((minutes = initialMinutes) => {
+    clearInterval(intervalRef.current); // Asegura parar el intervalo
     setIsRunning(false);
     setSecondsLeft(minutes * 60);
-  };
+  }, [initialMinutes]); // Dependencia: initialMinutes (si cambia)
 
-  const setTime = (minutes) => {
+  const setTime = useCallback((minutes) => {
+     clearInterval(intervalRef.current); // Asegura parar el intervalo
      setIsRunning(false);
      setSecondsLeft(minutes * 60);
-  }
+  }, []); // Sin dependencias, siempre hace lo mismo
 
   return {
     timeLeftFormatted: formatTime(secondsLeft),
     isRunning,
     startPause,
     reset,
-    setTime,
+    setTime, // Asegúrate de exportarla
   };
 };
