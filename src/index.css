@@ -1,21 +1,27 @@
 /* 1. RESET Y GLOBALES */
 :root {
-  /* Paleta de colores basada en las capturas */
-  --text-color: #333333;
+  /* Paleta de colores basada en la imagen */
+  --text-color: #E0E0E0; /* Texto principal claro */
   --text-color-light: #FFFFFF;
-  --border-color: #E0E0E0;
-  --widget-bg: #FFFFFF;
-  --shadow-color: rgba(40, 40, 80, 0.1);
-  --radius-m: 12px; /* Para widgets */
-  --radius-l: 16px; /* Para nav bar */
+  --text-color-dim: #8A8A8E; /* Texto secundario (gris) */
+  
+  --bg-color-dark: #1C1C1E; /* Fondo principal (casi negro) */
+  --widget-bg: #2C2C2E; /* Fondo del widget (gris oscuro) */
+
+  --border-color: #3A3A3C; /* Borde sutil */
+  --shadow-color: rgba(0, 0, 0, 0.2);
+
+  --radius-m: 16px; /* Más redondeado, como en la imagen */
+  --radius-l: 20px;
 
   /* Colores de acento */
-  --accent-green: #4CAF50;
-  --accent-orange: #FFA500;
-  --accent-blue: #007AFF;
-  --accent-red: #F44336;
-  --accent-purple: #9C27B0;
-  --accent-pink: #e91e63;
+  --accent-purple: #BF5AF2; /* Tomado de la barra "Steps" */
+  --accent-green: #34C759;
+  --accent-orange: #FF9500;
+  --accent-blue: #0A84FF;
+  --accent-red: #FF3B30;
+  --accent-pink: #FF2D55;
+  --accent-cyan: #64D2FF;
 }
 
 * {
@@ -23,13 +29,14 @@
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text-color); /* Texto por defecto */
 }
 
 body {
-  /* El fondo degradado de las capturas */
-  background: linear-gradient(120deg, #a777e3, #4259b2); /* Restaurado */
+  /* Fondo oscuro sólido, como en la imagen */
+  background-color: var(--bg-color-dark);
   background-attachment: fixed;
-  color: var(--text-color-light); /* Texto por defecto claro */
+  color: var(--text-color);
   min-height: 100vh;
 }
 
@@ -58,7 +65,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  color: var(--text-color-light); /* Aseguramos texto claro aquí */
+  color: var(--text-color-light);
 }
 
 .logo-container {
@@ -76,7 +83,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-color); /* Color del emoji */
+  color: var(--text-color);
 }
 
 .logo-title {
@@ -103,41 +110,41 @@ body {
   box-shadow: 0 0 8px var(--accent-green);
 }
 
-/* Barra de Navegación (estilo widget) */
+/* Barra de Navegación (Dark Mode) */
 .app-nav {
-  background-color: var(--widget-bg);
+  background-color: var(--widget-bg); /* Fondo oscuro */
   border-radius: var(--radius-l);
   padding: 0.5rem;
   display: flex;
   justify-content: flex-start;
   box-shadow: 0 4px 12px var(--shadow-color);
+  border: 1px solid var(--border-color);
 }
-
 .app-nav a {
   display: inline-block;
   padding: 0.75rem 1.25rem;
   text-decoration: none;
-  color: var(--text-color);
+  color: var(--text-color-dim); /* Texto de nav apagado */
   font-weight: 600;
   border-radius: 10px;
   margin-right: 0.5rem;
   transition: background-color 0.2s, color 0.2s;
   white-space: nowrap;
 }
-
 .app-nav a:hover {
-  background-color: #f0f0f0;
+  background-color: #3A3A3C; /* Gris más claro al pasar */
+  color: var(--text-color-light);
+}
+.app-nav a.active {
+  background-color: var(--accent-blue);
+  color: var(--text-color-light);
 }
 
-.app-nav a.active {
-  background-color: #eef2ff;
-  color: #4259b2;
-}
 
 /* 4. COMPONENTE WIDGET (TARJETA) */
 .widget {
   background-color: var(--widget-bg);
-  border: none;
+  border: 1px solid var(--border-color); /* Borde sutil */
   border-radius: var(--radius-m);
   padding: 1.5rem;
   box-shadow: 0 4px 12px var(--shadow-color);
@@ -150,120 +157,99 @@ body {
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-color);
-  /* Para alinear los emojis/iconos */
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-/* 5. DISEÑOS DE GRID (PARA CADA VISTA) */
-
-/* Vista: Progreso (3 columnas + 1) */
+/* 5. DISEÑOS DE GRID */
 .progreso-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* 4 columnas */
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
 .progreso-summary-grid .widget {
   text-align: center;
 }
-.progreso-summary-grid .stat-number {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-/* Colores de los números */
-.progreso-summary-grid .stat-number.green { color: var(--accent-green); }
-.progreso-summary-grid .stat-number.orange { color: var(--accent-orange); }
-.progreso-summary-grid .stat-number.blue { color: var(--accent-blue); }
 
-/* Vista: Alimentación (2 columnas) */
-.alimentacion-grid {
+/* Grid de 2 columnas para el resto de vistas */
+.alimentacion-grid, .rutinas-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 1.5rem;
 }
-
-/* Vista: Rutinas (3 columnas) */
-.rutinas-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 1.5rem;
-}
-/* Responsive para Rutinas */
 @media (max-width: 1024px) {
   .rutinas-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 1fr; /* Apilado en móvil */
   }
 }
 
-/* 6. ESTILOS DE CONTENIDO INTERNO */
-
-.widget-placeholder {
+/* 6. ESTILOS DE WIDGETS DE PROGRESO (Círculos) */
+.progress-circle-wrapper {
+  width: 70%; /* Tamaño del círculo */
+  max-width: 180px;
+  margin: 0 auto;
+  position: relative; /* Para posicionar la unidad */
+}
+.progress-circle-wrapper .CircularProgressbar-text {
+  fill: var(--text-color-light) !important;
+  font-size: 1.75rem !important;
+  font-weight: 600;
+}
+.progress-circle-unit {
+  position: absolute;
+  bottom: 30%;
+  left: 0;
+  right: 0;
   text-align: center;
-  color: #777;
-  padding: 2rem 0;
+  color: var(--text-color-dim);
   font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: -10px;
 }
 
-/* Tarjetas de Sugerencias (Alimentación y Rutinas) */
+/* 7. TARJETAS DE SUGERENCIAS (Rediseño Dark) */
 .suggestion-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
-
 .suggestion-card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border-radius: 8px;
-  border-left: 5px solid;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color-dark); /* Fondo más oscuro */
 }
 .suggestion-card .card-content {
-  flex-grow: 1; /* Para que ocupe el espacio */
-  margin-right: 1rem; /* Espacio antes del botón */
+  flex-grow: 1;
+  margin-right: 1rem;
 }
 .suggestion-card .card-content strong {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
+  color: var(--text-color-light);
 }
 .suggestion-card .card-content p {
   font-size: 0.9rem;
-  color: #555;
-  margin-top: 0.25rem;
-}
-.suggestion-card .card-content span {
-  font-size: 0.8rem;
-  color: #777;
-  font-weight: 500;
-  display: block; /* Para que esté debajo */
+  color: var(--text-color-dim);
   margin-top: 0.25rem;
 }
 
-/* Colores de las tarjetas */
-.suggestion-card.breakfast { border-color: var(--accent-green); background-color: #f0fff4; }
-.suggestion-card.lunch { border-color: var(--accent-blue); background-color: #f0f7ff; }
-.suggestion-card.dinner { border-color: var(--accent-pink); background-color: #fff0f5; }
-.suggestion-card.cardio { border-color: var(--accent-orange); background-color: #fff8f0; }
-.suggestion-card.strength { border-color: var(--accent-red); background-color: #fff0f0; }
-.suggestion-card.flex { border-color: var(--accent-purple); background-color: #fcf0ff; }
-
-/* Botones */
-.btn-add, .btn-guide {
-  padding: 0.5rem 1rem;
+/* Botones "Agregar" (estilo "pill") */
+.btn-add {
+  padding: 0.6rem 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 20px;
   color: white;
   font-weight: 600;
   cursor: pointer;
-  margin-left: 0.5rem;
-  white-space: nowrap; /* Evitar que el texto se divida */
+  white-space: nowrap;
+  font-size: 0.9rem;
 }
-
-.suggestion-card.breakfast .btn-add { background-color: var(--accent-green); }
+.suggestion-card.breakfast .btn-add, .btn-add-plan { background-color: var(--accent-green); }
 .suggestion-card.lunch .btn-add { background-color: var(--accent-blue); }
 .suggestion-card.dinner .btn-add { background-color: var(--accent-pink); }
 .suggestion-card.cardio .btn-add { background-color: var(--accent-orange); }
@@ -280,18 +266,18 @@ body {
   background-color: var(--accent-blue);
   color: white;
   cursor: pointer;
-  margin-top: 1rem; /* Añadido espacio */
+  margin-top: 1rem;
 }
 
-/* Widget "Mi Plan" */
+/* 8. WIDGET "MI PLAN" (Dark Mode) */
 .my-plan-display {
   white-space: pre-line;
   margin-bottom: 1rem;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color);
   padding: 10px;
   min-height: 50px;
   border-radius: 8px;
-  background-color: #f9f9f9;
+  background-color: var(--bg-color-dark);
   text-align: left;
 }
 .plan-input-wrapper {
@@ -300,13 +286,18 @@ body {
 }
 .plan-textarea {
   width: 100%;
-  min-height: 150px; /* Reducido un poco */
+  min-height: 150px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
   padding: 0.75rem;
   font-size: 0.9rem;
   resize: vertical;
-  padding-right: 55px; /* Espacio para el botón + */
+  padding-right: 55px;
+  background-color: var(--bg-color-dark);
+  color: var(--text-color);
+}
+.plan-textarea::placeholder {
+  color: var(--text-color-dim);
 }
 .btn-add-plan {
   position: absolute;
@@ -316,21 +307,59 @@ body {
   height: 40px;
   border-radius: 8px;
   border: none;
-  background-color: var(--accent-blue);
+  /* background-color: var(--accent-blue); (Heredado de .breakfast .btn-add) */
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
-  line-height: 40px; /* Centrar el + verticalmente */
+  line-height: 40px;
 }
 
-/* Timer */
+/* 9. ESTILOS DE LISTAS (Checkboxes) */
+.plan-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.plan-list li {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.plan-list li:last-child {
+  border-bottom: none;
+}
+.plan-list input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.plan-list label {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-break: break-word;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+.plan-list label.completed {
+  text-decoration: line-through;
+  color: var(--text-color-dim);
+}
+
+
+/* 10. ESTILOS DE TIMER (Dark Mode) */
 .timer-display {
   font-size: 3rem;
   font-weight: 700;
   text-align: center;
-  color: var(--text-color);
+  color: var(--text-color-light);
   margin: 1rem 0;
-  font-variant-numeric: tabular-nums; /* Para que los números no salten */
+  font-variant-numeric: tabular-nums;
 }
 .timer-buttons {
   display: grid;
@@ -348,88 +377,30 @@ body {
   cursor: pointer;
 }
 .btn-timer.start { background-color: var(--accent-green); }
-.btn-timer.pause { background-color: var(--accent-orange); } /* Añadido */
+.btn-timer.pause { background-color: var(--accent-orange); }
 .btn-timer.reset { background-color: var(--accent-red); }
 
 .timer-presets {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-  margin-top: 1rem; /* Añadido espacio */
+  margin-top: 1rem;
 }
 .btn-preset {
   padding: 0.5rem;
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  background-color: #f9f9f9;
-  color: var(--text-color);
+  background-color: var(--bg-color-dark);
+  color: var(--text-color-dim);
   cursor: pointer;
   font-weight: 500;
 }
 .btn-preset:hover {
-  background-color: #f0f0f0;
+  background-color: var(--border-color);
+  color: var(--text-color-light);
 }
 
-/* Botón de Reinicio */
-.btn-reset-challenge {
-  margin-top: 1.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  background-color: var(--accent-red);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-block; /* Para centrar si el widget es text-align: center */
-}
-
-
-/* === ESTILOS AÑADIDOS PARA LAS MEJORAS === */
-
-/* 1. Estilos para las listas de planes (comidas/rutinas) */
-.plan-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  text-align: left;
-  max-height: 400px; /* Altura máxima para evitar que sea muy largo */
-  overflow-y: auto; /* Scroll si es necesario */
-}
-
-.plan-list li {
-  display: flex;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-.plan-list li:last-child {
-  border-bottom: none;
-}
-
-.plan-list input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  margin-right: 12px;
-  flex-shrink: 0; /* Evita que el checkbox se encoja */
-  cursor: pointer;
-}
-
-.plan-list label {
-  font-size: 0.95rem;
-  line-height: 1.4;
-  word-break: break-word; /* Para que el texto largo se ajuste */
-  transition: color 0.2s;
-  cursor: pointer;
-}
-
-/* Estilo para el texto tachado */
-.plan-list label.completed {
-  text-decoration: line-through;
-  color: #999;
-}
-
-
-/* 2. Estilos para el Widget de Hidratación */
+/* 11. BOTONES DE HIDRATACIÓN (Dark Mode) */
 .hydration-buttons {
   display: flex;
   gap: 1rem;
@@ -439,7 +410,7 @@ body {
 .hydration-buttons button {
   width: 50px;
   height: 50px;
-  border-radius: 50%; /* Botones redondos */
+  border-radius: 50%;
   border: none;
   background-color: var(--accent-blue);
   color: white;
@@ -449,18 +420,38 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1; /* Ajuste para centrar el +/- */
+  line-height: 1;
   transition: background-color 0.2s;
 }
 .hydration-buttons button:hover {
   background-color: #0056b3;
 }
-/* Botón de restar */
 .hydration-buttons button:first-child {
-  background-color: #f0f7ff;
+  background-color: var(--widget-bg);
   color: var(--accent-blue);
   border: 1px solid var(--accent-blue);
 }
 .hydration-buttons button:first-child:hover {
-  background-color: #e0ecf8;
+  background-color: var(--border-color);
+}
+
+/* 12. BOTÓN RESET (Dark Mode) */
+.btn-reset-challenge {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--accent-red);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-block;
+}
+
+/* 13. ESTILOS MISCELÁNEOS */
+.widget-placeholder {
+  text-align: center;
+  color: var(--text-color-dim);
+  padding: 2rem 0;
+  font-size: 0.9rem;
 }
