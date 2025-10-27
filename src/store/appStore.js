@@ -1,40 +1,30 @@
 // src/store/appStore.js
 import { create } from 'zustand';
 import { getTodayName, getChallengeDay, resetChallengeDate } from '../utils/dateUtils';
-// --- Importaciones de Firebase ---
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"; // 'writeBatch' no se usó, se elimina
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { firestore } from '../firebaseConfig';
-import { useAuthStore } from './authStore'; // Importamos el authStore
+import { useAuthStore } from './authStore';
 
-// --- INICIO DE LA CORRECCIÓN ---
-// Claves para los campos en Firestore (reemplazan las claves de LocalStorage)
 const PLAN_ALIMENTACION_KEY = 'miPlanAlimentacion';
 const PLAN_RUTINA_KEY = 'miRutinaEjercicios';
-// --- FIN DE LA CORRECCIÓN ---
+const HISTORICAL_DATA_KEY = 'historicalData'; 
 
-/* NOTA: Hemos eliminado TODAS las referencias a 'localStorage'.
-  El estado ahora se inicializa vacío y se cargará desde Firestore.
-*/
-
-// --- Funciones Auxiliares de Firestore ---
-
-// Función para cargar los datos del usuario desde Firestore
+// --- Funciones Auxiliares (sin cambios) ---
 const loadDataFromFirestore = async (uid) => {
-  if (!uid) return { initialPlanAlimentacion: [], initialRutinaEjercicios: [], initialProgreso: {} };
+  if (!uid) return { initialPlanAlimentacion: [], initialRutinaEjercicios: [], initialProgreso: {}, initialHistoricalData: {} };
 
   const docRef = doc(firestore, "userProgress", uid);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
     const data = docSnap.data();
-    // Devolvemos los datos con los valores por defecto si no existen
     return {
       initialPlanAlimentacion: data.miPlanAlimentacion || [],
       initialRutinaEjercicios: data.miRutinaEjercicios || [],
       initialProgreso: data.progreso || { vasosDeAgua: 0 },
+      initialHistoricalData: data.historicalData || { completedTasks: [], weight: [] },
     };
   } else {
-    // Si el documento no existe, creamos uno básico
     console.log("No existe documento para el usuario, creando uno nuevo...");
     const initialData = {
       miPlanAlimentacion: [],
@@ -44,31 +34,28 @@ const loadDataFromFirestore = async (uid) => {
         ejerciciosProgramados: 0,
         actividadesCompletadas: 0,
         vasosDeAgua: 0,
-      }
+      },
+      historicalData: { completedTasks: [], weight: [] }
     };
     await setDoc(docRef, initialData);
     return {
       initialPlanAlimentacion: initialData.miPlanAlimentacion,
       initialRutinaEjercicios: initialData.miRutinaEjercicios,
       initialProgreso: initialData.progreso,
+      initialHistoricalData: initialData.historicalData,
     };
   }
 };
 
-// Función genérica para guardar un campo específico en Firestore
 const saveDataToFirestore = async (key, value) => {
   const uid = useAuthStore.getState().user?.uid;
   if (!uid) return;
   
   const docRef = doc(firestore, "userProgress", uid);
   try {
-    // Usamos updateDoc para actualizar solo los campos enviados
-    await updateDoc(docRef, {
-      [key]: value
-    });
+    await updateDoc(docRef, { [key]: value });
   } catch (error) {
     console.error(`Error guardando ${key} en Firestore:`, error);
-    // Si falla (ej. el doc no existe), intentamos crearlo con setDoc (merge)
     await setDoc(docRef, { [key]: value }, { merge: true });
   }
 };
@@ -76,46 +63,60 @@ const saveDataToFirestore = async (key, value) => {
 
 
 export const useAppStore = create((set, get) => ({
-  // --- Estado ---
+  // --- Estado (sin cambios) ---
   challengeDay: getChallengeDay(),
   todayName: getTodayName(),
-  miPlanAlimentacion: [], // Inicia vacío
-  miRutinaEjercicios: [], // Inicia vacío
+  miPlanAlimentacion: [],
+  miRutinaEjercicios: [],
+  historicalData: { completedTasks: [], weight: [] },
   progreso: {
     comidasPlanificadas: 0,
     ejerciciosProgramados: 0,
     actividadesCompletadas: 0,
     vasosDeAgua: 0,
-  }, // Inicia vacío
-  isStoreLoading: true, // Estado para saber si el store está cargando datos de FS
+  },
+  isStoreLoading: true,
 
-  // --- Acciones (Mutaciones del estado) ---
+  // --- Acciones ---
 
-  // NUEVA ACCIÓN: Cargar datos cuando el usuario inicia sesión
+  // ¡¡¡ --- FUNCIÓN MODIFICADA --- !!!
   fetchUserData: async (uid) => {
     set({ isStoreLoading: true });
-    const { initialPlanAlimentacion, initialRutinaEjercicios, initialProgreso } = await loadDataFromFirestore(uid);
     
-    // Recalcula los contadores al cargar
-    initialProgreso.comidasPlanificadas = initialPlanAlimentacion.length;
-    initialProgreso.ejerciciosProgramados = initialRutinaEjercicios.length;
-    initialProgreso.actividadesCompletadas = 
-      initialPlanAlimentacion.filter(c => c.completed).length + 
-      initialRutinaEjercicios.filter(r => r.completed).length;
+    // --- INICIO DE LA CORRECCIÓN ---
+    try {
+      const { initialPlanAlimentacion, initialRutinaEjercicios, initialProgreso, initialHistoricalData } = await loadDataFromFirestore(uid);
+      
+      // Recalcula los contadores al cargar
+      initialProgreso.comidasPlanificadas = initialPlanAlimentacion.length;
+      initialProgreso.ejerciciosProgramados = initialRutinaEjercicios.length;
+      initialProgreso.actividadesCompletadas = 
+        initialPlanAlimentacion.filter(c => c.completed).length + 
+        initialRutinaEjercicios.filter(r => r.completed).length;
 
-    set({ 
-      miPlanAlimentacion: initialPlanAlimentacion,
-      miRutinaEjercicios: initialRutinaEjercicios,
-      progreso: initialProgreso,
-      isStoreLoading: false 
-    });
+      set({ 
+        miPlanAlimentacion: initialPlanAlimentacion,
+        miRutinaEjercicios: initialRutinaEjercicios,
+        progreso: initialProgreso,
+        historicalData: initialHistoricalData, 
+        isStoreLoading: false // <-- Se pone en false al TERMINAR
+      });
+
+    } catch (error) {
+      console.error("Error al cargar datos de Firestore:", error);
+      // ¡Importante! Poner loading en false incluso si hay error,
+      // para que la app no se quede pegada.
+      set({ isStoreLoading: false });
+    }
+    // --- FIN DE LA CORRECCIÓN ---
   },
+  // --- FIN DE LA FUNCIÓN MODIFICADA ---
 
-  // NUEVA ACCIÓN: Limpiar datos cuando el usuario cierra sesión
   clearUserData: () => {
     set({
       miPlanAlimentacion: [],
       miRutinaEjercicios: [],
+      historicalData: { completedTasks: [], weight: [] },
       progreso: {
         comidasPlanificadas: 0,
         ejerciciosProgramados: 0,
@@ -126,8 +127,6 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
-
-  // Función auxiliar para recalcular todo el progreso
   recalcularProgreso: (comidas, rutinas) => {
     const comidasPlanificadas = comidas.length;
     const ejerciciosProgramados = rutinas.length;
@@ -143,42 +142,55 @@ export const useAppStore = create((set, get) => ({
     };
     
     set({ progreso: newProgreso });
-    // Guardamos el objeto de progreso actualizado
     saveDataToFirestore('progreso', newProgreso);
   },
 
-  // Acción para añadir texto al plan de alimentación
   addAlPlanAlimentacion: (texto) => {
     const newId = new Date().getTime();
     const newItem = { id: newId, text: texto, completed: false };
     const newState = [...get().miPlanAlimentacion, newItem];
     
     set({ miPlanAlimentacion: newState });
-    saveDataToFirestore(PLAN_ALIMENTACION_KEY, newState); // <-- Ahora funciona
+    saveDataToFirestore(PLAN_ALIMENTACION_KEY, newState);
     get().recalcularProgreso(newState, get().miRutinaEjercicios);
   },
 
-  // Acción para añadir texto a la rutina de ejercicios
   addAlPlanRutina: (texto) => {
     const newId = new Date().getTime();
     const newItem = { id: newId, text: texto, completed: false };
     const newState = [...get().miRutinaEjercicios, newItem];
 
     set({ miRutinaEjercicios: newState });
-    saveDataToFirestore(PLAN_RUTINA_KEY, newState); // <-- Ahora funciona
+    saveDataToFirestore(PLAN_RUTINA_KEY, newState);
     get().recalcularProgreso(get().miPlanAlimentacion, newState);
   },
-
-  // Acción para marcar/desmarcar un ítem
+  
   togglePlanItem: (tipo, id) => {
     let key, stateSlice;
     if (tipo === 'comida') {
-      key = PLAN_ALIMENTACION_KEY; // <-- Ahora funciona
+      key = PLAN_ALIMENTACION_KEY;
       stateSlice = 'miPlanAlimentacion';
     } else if (tipo === 'ejercicio') {
-      key = PLAN_RUTINA_KEY; // <-- Ahora funciona
+      key = PLAN_RUTINA_KEY;
       stateSlice = 'miRutinaEjercicios';
     } else return;
+
+    let newHistoricalTasks = [...get().historicalData.completedTasks];
+    const item = get()[stateSlice].find(i => i.id === id);
+
+    if (item && !item.completed) {
+      const newRecord = {
+        id: new Date().getTime(),
+        date: new Date().toISOString(),
+        text: item.text,
+        type: tipo
+      };
+      newHistoricalTasks.push(newRecord);
+      
+      const newHistoricalData = { ...get().historicalData, completedTasks: newHistoricalTasks };
+      set({ historicalData: newHistoricalData });
+      saveDataToFirestore(HISTORICAL_DATA_KEY, newHistoricalData);
+    }
 
     const newState = get()[stateSlice].map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
@@ -194,7 +206,6 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
-  // Acción para el tracker de agua
   setVasosDeAgua: (cantidad) => {
     if (cantidad < 0) cantidad = 0;
     const newProgreso = { ...get().progreso, vasosDeAgua: cantidad };
@@ -202,13 +213,12 @@ export const useAppStore = create((set, get) => ({
     saveDataToFirestore('progreso', newProgreso);
   },
   
-  // Acción para reiniciar el reto
   reiniciarRetoCompleto: async () => {
     const uid = useAuthStore.getState().user?.uid;
     if (!uid) return;
 
     if (window.confirm("¿Estás seguro de que quieres reiniciar el reto? Se borrará tu progreso y planes de la nube, y volverás al Día 1.")) {
-      resetChallengeDate(); // Resetea el día en localStorage (esto sigue siendo local)
+      resetChallengeDate();
       
       const initialProgreso = { 
         comidasPlanificadas: 0, 
@@ -216,22 +226,23 @@ export const useAppStore = create((set, get) => ({
         actividadesCompletadas: 0, 
         vasosDeAgua: 0
       };
-      
-      // Resetea el estado local en Zustand
+      const initialHistoricalData = { completedTasks: [], weight: [] };
+
       set({ 
         challengeDay: 1,
         progreso: initialProgreso,
         miPlanAlimentacion: [],
-        miRutinaEjercicios: []
+        miRutinaEjercicios: [],
+        historicalData: initialHistoricalData
       });
 
-      // Resetea los datos en Firestore
       try {
         const docRef = doc(firestore, "userProgress", uid);
         await setDoc(docRef, {
           progreso: initialProgreso,
           miPlanAlimentacion: [],
-          miRutinaEjercicios: []
+          miRutinaEjercicios: [],
+          historicalData: initialHistoricalData
         });
         window.location.reload();
       } catch (error) {
@@ -241,19 +252,13 @@ export const useAppStore = create((set, get) => ({
   }
 }));
 
-// --- Conexión entre Stores (MUY IMPORTANTE) ---
-// Hacemos que el authStore escuche los cambios del appStore
-
+// --- Conexión entre Stores (sin cambios) ---
 useAuthStore.subscribe(
-  (state) => state.user, // Escuchamos solo al 'user'
+  (state) => state.user,
   (user, prevUser) => {
     if (user && !prevUser) {
-      // El usuario acaba de iniciar sesión
-      // Llamamos a la acción de appStore para cargar sus datos
       useAppStore.getState().fetchUserData(user.uid);
     } else if (!user && prevUser) {
-      // El usuario acaba de cerrar sesión
-      // Limpiamos los datos de appStore
       useAppStore.getState().clearUserData();
     }
   }

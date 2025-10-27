@@ -1,31 +1,34 @@
 // src/App.jsx
-import React, { useEffect } from 'react'; // <-- Importa useEffect
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Importa los componentes y vistas
+// Vistas
 import Header from './components/Header';
 import ProgresoView from './views/ProgresoView';
 import AlimentacionView from './views/AlimentacionView';
 import RutinasView from './views/RutinasView';
-import AuthView from './views/AuthView'; // <-- Importa la vista de Auth
-import BienestarView from './views/BienestarView'; // <-- Importa la vista de Bienestar
+import AuthView from './views/AuthView';
+import BienestarView from './views/BienestarView';
+import PerfilView from './views/PerfilView'; // <-- 1. Importa la vista de Perfil
 
-// Importa el hook del store de Autenticación
+// Stores
 import { useAuthStore } from './store/authStore';
+import { useAppStore } from './store/appStore'; // <-- Importa appStore
 
 function App() {
-  // Obtiene el estado de autenticación
   const user = useAuthStore((state) => state.user);
-  const isLoading = useAuthStore((state) => state.isLoading);
+  const isAuthLoading = useAuthStore((state) => state.isLoading);
   const checkAuthState = useAuthStore((state) => state.checkAuthState);
+  
+  // --- NUEVO: Estado de carga del store ---
+  const isStoreLoading = useAppStore((state) => state.isStoreLoading);
 
-  // Comprueba el estado de autenticación al cargar la app
   useEffect(() => {
     checkAuthState();
   }, [checkAuthState]);
 
-  // Muestra un 'cargando' mientras se verifica la sesión
-  if (isLoading) {
+  // Muestra 'cargando' si la auth O el store de datos están cargando
+  if (isAuthLoading || (user && isStoreLoading)) {
     return <h2 style={{ color: 'white', textAlign: 'center', marginTop: '5rem' }}>Cargando...</h2>;
   }
 
@@ -33,35 +36,28 @@ function App() {
     <Router>
       <div className="app-container">
         
-        {/* El Header solo se muestra si el usuario está logueado */}
         {user && <Header />}
 
         <main className="main-content">
           <Routes>
-            {/* Si el usuario está logueado */}
             {user ? (
               <>
                 <Route path="/progreso" element={<ProgresoView />} />
                 <Route path="/alimentacion" element={<AlimentacionView />} />
                 <Route path="/rutinas" element={<RutinasView />} />
-                <Route path="/bienestar" element={<BienestarView />} /> {/* <-- Nueva Ruta */}
+                <Route path="/bienestar" element={<BienestarView />} />
+                <Route path="/perfil" element={<PerfilView />} /> {/* <-- 2. Añade la ruta */}
                 
-                {/* Redirige la raíz a /progreso si está logueado */}
                 <Route path="/" element={<Navigate replace to="/progreso" />} />
-                
-                {/* Si está logueado e intenta ir a /auth, lo mandamos a progreso */}
                 <Route path="/auth" element={<Navigate replace to="/progreso" />} />
               </>
             ) : (
-              // Si el usuario NO está logueado
               <>
                 <Route path="/auth" element={<AuthView />} />
-                {/* Cualquier otra ruta lo redirige a /auth */}
                 <Route path="*" element={<Navigate replace to="/auth" />} />
               </>
             )}
             
-            {/* Página no encontrada genérica (aunque la lógica anterior ya cubre todo) */}
             <Route path="*" element={<h2 style={{ color: 'white', textAlign: 'center', marginTop: '2rem' }}>Página no encontrada</h2>} />
           </Routes>
         </main>
