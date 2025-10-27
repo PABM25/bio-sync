@@ -1,31 +1,69 @@
 import React from 'react';
 import Widget from '../components/Widget';
+import { PLAN_PILAR_COMIDAS } from '../data'; // Importamos los datos del plan
 
-// Basado en la Captura de pantalla 2025-10-26 221914.jpg
-// y datos del Plan (1).docx
-function AlimentacionView() {
+// La vista ahora recibe 'todayName' como prop desde App.jsx
+function AlimentacionView({ todayName }) {
+  
+  // Encontrar el plan de comidas para el día de hoy
+  // Si es un día sin plan (ej. Sábado sin datos), usa Lunes como fallback
+  const comidaHoy = PLAN_PILAR_COMIDAS.find(p => p.dia === todayName) || PLAN_PILAR_COMIDAS[0];
+
   return (
     <div className="alimentacion-grid">
-      <Widget title="Sugerencias IA (Plan de Pilar)">
-        <ul>
-          <li>
-            <strong>Desayuno:</strong> 40g avena + 150ml leche + ½ plátano + 1 huevo.
-          </li>
-          <li>
-            <strong>Almuerzo:</strong> 120g pollo + 100g arroz integral cocido + Ensalada verde.
-          </li>
-          <li>
-            <strong>Snack:</strong> 1 yogur griego (120g) + 1 fruta.
-          </li>
-          <li>
-            <strong>Cena:</strong> 100g pescado blanco + 200g verduras salteadas.
-          </li>
-        </ul>
+      {/* El título ahora es dinámico */}
+      <Widget title={`🍽️ Sugerencias IA (Plan ${comidaHoy.dia})`}>
+        <div className="suggestion-list">
+          
+          {/* Tarjeta de Desayuno (Dinámica) */}
+          <div className="suggestion-card breakfast">
+            <div className="card-content">
+              <strong>Desayuno</strong>
+              <p>{comidaHoy.desayuno}</p>
+            </div>
+            <button className="btn-add">Agregar</button>
+          </div>
+
+          {/* Tarjeta de Almuerzo (Dinámica) */}
+          <div className="suggestion-card lunch">
+            <div className="card-content">
+              <strong>Almuerzo</strong>
+              <p>{comidaHoy.almuerzo}</p>
+            </div>
+            <button className="btn-add">Agregar</button>
+          </div>
+
+          {/* Tarjeta de Snack (Dinámica) */}
+          <div className="suggestion-card dinner">
+            <div className="card-content">
+              <strong>Snack</strong>
+              <p>{comidaHoy.snack}</p>
+            </div>
+            <button className="btn-add">Agregar</button>
+          </div>
+          
+          {/* Tarjeta de Cena (Dinámica) */}
+          <div className="suggestion-card" style={{borderColor: 'var(--accent-purple)', backgroundColor: '#fcf0ff'}}>
+            <div className="card-content">
+              <strong>Cena</strong>
+              <p>{comidaHoy.cena}</p>
+            </div>
+            <button className="btn-add" style={{backgroundColor: 'var(--accent-purple)'}}>Agregar</button>
+          </div>
+
+        </div>
+        
+        <button className="btn-generate">Generar Nuevas Sugerencias</button>
       </Widget>
 
-      <Widget title="Mi Plan de Alimentación">
-        <p>Agrega comidas desde las sugerencias de IA o crea tu propio plan personalizado.</p>
-        {/* Aquí iría un <textarea> y un botón en una app real */}
+      <Widget title="📝 Mi Plan de Alimentación">
+        <p className="widget-placeholder">
+          Agrega comidas desde las sugerencias de IA o crea tu propio plan personalizado.
+        </p>
+        <div className="plan-input-wrapper">
+          <textarea className="plan-textarea" placeholder="Agregar comida personalizada..."></textarea>
+          <button className="btn-add-plan">+</button>
+        </div>
       </Widget>
     </div>
   );
