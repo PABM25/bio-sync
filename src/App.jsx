@@ -1,83 +1,54 @@
-import React, { useState, useEffect } from 'react';
+// src/App.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Importa los componentes
-import Header from './components/Header';
+// Importa los componentes y vistas
+import Header from './components/Header'; // Asegúrate que la ruta sea correcta
 import ProgresoView from './views/ProgresoView';
 import AlimentacionView from './views/AlimentacionView';
 import RutinasView from './views/RutinasView';
 
-// Mapeo de getDay() a los nombres en los datos del Plan (1).docx
-const DIAS_SEMANA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-
-// Función para calcular en qué día del reto de 45 días estamos
-const getChallengeDay = () => {
-  const startDateString = localStorage.getItem('challengeStartDate');
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Normalizar a medianoche
-
-  let challengeDay = 1;
-
-  if (startDateString) {
-    const startDate = new Date(startDateString);
-    startDate.setHours(0, 0, 0, 0); // Normalizar
-    
-    // Calcula la diferencia en días
-    const diffTime = Math.abs(today - startDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    challengeDay = diffDays + 1; // El primer día es 1
-  } else {
-    // Si no hay fecha guardada, hoy es el día 1. La guardamos.
-    localStorage.setItem('challengeStartDate', today.toISOString());
-  }
-
-  // El reto es de 45 días, así que usamos el módulo % para que reinicie
-  // (challengeDay - 1) % 45 + 1;
-  // (Día 1-1) % 45 + 1 = 1
-  // (Día 45-1) % 45 + 1 = 45
-  // (Día 46-1) % 45 + 1 = 1 (reinicia el ciclo)
-  return ((challengeDay - 1) % 45) + 1;
-};
-
+// Importa el hook del store de Zustand (pero ya no necesitamos leer todo aquí)
+// import { useAppStore } from './store/appStore'; // <-- Ya no es necesario importar aquí si no se usa
 
 function App() {
-  // Este estado controla qué vista se muestra
-  const [view, setView] = useState('progreso');
-  
-  // Nuevos estados para el día actual
-  const [challengeDay, setChallengeDay] = useState(1);
-  const [todayName, setTodayName] = useState("Lunes");
-
-  // Este Hook se ejecuta una vez cuando la App carga
-  useEffect(() => {
-    // 1. Calcular el día del reto (del 1 al 45)
-    setChallengeDay(getChallengeDay());
-    
-    // 2. Obtener el nombre del día de la semana (Lunes, Martes...)
-    const dayIndex = new Date().getDay();
-    setTodayName(DIAS_SEMANA[dayIndex]);
-
-    // Opcional: Para probar, puedes forzar un día:
-    // setChallengeDay(3);
-    // setTodayName("Miércoles");
-
-  }, []); // El array vacío [] asegura que solo se ejecute al inicio
+  // Ya NO necesitamos obtener challengeDay ni todayName aquí
+  // const challengeDay = useAppStore((state) => state.challengeDay); // <--- LÍNEA ELIMINADA
+  // const todayName = useAppStore((state) => state.todayName);      // <--- LÍNEA ELIMINADA
 
   return (
-    <div className="app-container">
-      
-      {/* El Header recibe el estado y la función para cambiarlo */}
-      <Header view={view} setView={setView} />
+    <Router> {/* Envuelve todo en el Router */}
+      <div className="app-container">
 
-      {/* El contenido principal cambia según el estado 'view' */}
-      <main className="main-content">
-        
-        {/* Pasamos los datos del día a las vistas correspondientes */}
-        {view === 'progreso' && <ProgresoView challengeDay={challengeDay} />}
-        {view === 'alimentacion' && <AlimentacionView todayName={todayName} />}
-        {view === 'rutinas' && <RutinasView challengeDay={challengeDay} />}
-      </main>
+        {/* El Header ahora estará presente en todas las rutas */}
+        <Header />
 
-    </div>
+        {/* El contenido principal cambia según la ruta */}
+        <main className="main-content">
+          <Routes> {/* Define las rutas */}
+            <Route
+              path="/progreso"
+              element={<ProgresoView />} // Las vistas obtienen los datos del store internamente
+            />
+            <Route
+              path="/alimentacion"
+              element={<AlimentacionView />} // Ya no necesitan props
+            />
+            <Route
+              path="/rutinas"
+              element={<RutinasView />} // Ya no necesitan props
+            />
+            {/* Ruta por defecto: redirige a /progreso */}
+            <Route
+              path="/"
+              element={<Navigate replace to="/progreso" />}
+            />
+             {/* Opcional: Ruta para página no encontrada */}
+            <Route path="*" element={<h2 style={{ color: 'white', textAlign: 'center', marginTop: '2rem' }}>Página no encontrada</h2>} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 

@@ -1,49 +1,43 @@
+// src/views/ProgresoView.jsx
 import React from 'react';
-import Widget from '../components/Widget';
+import Widget from '../components/Widget'; // Ajusta ruta si es necesario
+import { useAppStore } from '../store/appStore'; // Importa store
 
-// Recibimos challengeDay como prop
-function ProgresoView({ challengeDay }) {
-
-  // Función para reiniciar el reto
-  const handleResetChallenge = () => {
-    // Pregunta al usuario para confirmar
-    if (window.confirm("¿Estás seguro de que quieres reiniciar el reto? Se borrará tu progreso actual y volverás al Día 1.")) {
-      localStorage.removeItem('challengeStartDate'); // Borra la fecha de inicio guardada
-      window.location.reload(); // Recarga la página para aplicar el cambio
-    }
-  };
+function ProgresoView() {
+  // Obtenemos datos y acción del store
+  const challengeDay = useAppStore((state) => state.challengeDay);
+  const { comidasPlanificadas, ejerciciosProgramados, actividadesCompletadas } = useAppStore((state) => state.progreso);
+  const reiniciarRetoCompleto = useAppStore((state) => state.reiniciarRetoCompleto);
+  // const clearPlanes = useAppStore((state) => state.clearPlanes); // <--- LÍNEA ELIMINADA
 
   return (
     <>
-      {/* Grid superior con 3 widgets */}
       <div className="progreso-summary-grid">
+        {/* Muestra los contadores del store */}
         <Widget title="🍎 Comidas Planificadas">
-          <div className="stat-number green">0</div>
-          {/* Aquí podrías añadir lógica para contar comidas agregadas */}
+          <div className="stat-number green">{comidasPlanificadas}</div>
         </Widget>
         <Widget title="💪 Ejercicios Programados">
-          <div className="stat-number orange">0</div>
-          {/* Aquí podrías añadir lógica para contar rutinas agregadas */}
+          <div className="stat-number orange">{ejerciciosProgramados}</div>
         </Widget>
         <Widget title="✅ Actividades Completadas">
-          <div className="stat-number blue">0</div>
-          {/* Aquí podrías añadir lógica para marcar actividades */}
+          <div className="stat-number blue">{actividadesCompletadas}</div>
         </Widget>
       </div>
 
-      {/* Widget inferior de actividad */}
       <Widget title="📝 Actividad Reciente">
-        {/* Mostramos el día actual del reto */}
         <p className="widget-placeholder">
           ¡Bienvenido al <strong>Día {challengeDay}</strong> de tu reto!
           <br/>
-          Comienza agregando comidas y ejercicios para ver tu progreso aquí.
+          Aquí verás un resumen de tus actividades completadas.
         </p>
 
-        {/* Botón para reiniciar el reto */}
-        <button className="btn-reset-challenge" onClick={handleResetChallenge}>
-          Reiniciar Reto
+        {/* Botón para reiniciar */}
+        <button className="btn-reset-challenge" onClick={reiniciarRetoCompleto}>
+          Reiniciar Reto Completo
         </button>
+        {/* El botón que usaba clearPlanes también se puede eliminar si no se necesita */}
+        {/* <button style={{marginLeft: '1rem'}} onClick={clearPlanes}>Limpiar Planes</button> */}
       </Widget>
     </>
   );

@@ -1,13 +1,14 @@
+// src/components/Header.jsx
 import React from 'react';
+import { NavLink } from 'react-router-dom'; // Importa NavLink
 
-// El Header ahora renderiza la barra superior Y la barra de navegación
-function Header({ view, setView }) {
+// Ya no necesita recibir 'view' ni 'setView'
+function Header() {
   return (
     <header className="app-header-container">
       {/* 1. Barra superior (Logo e Info) */}
       <div className="app-header-top">
         <div className="logo-container">
-          {/* Usamos un emoji como placeholder del logo */}
           <span className="logo-icon">🥗</span>
           <div className="logo-text">
             <div className="logo-title">Vida Saludable IA</div>
@@ -20,39 +21,27 @@ function Header({ view, setView }) {
         </div>
       </div>
 
-      {/* 2. Barra de Navegación (la que se ve como widget) */}
+      {/* 2. Barra de Navegación con NavLink */}
       <nav className="app-nav">
-        <a
-          href="#"
-          className={view === 'alimentacion' ? 'active' : ''}
-          onClick={(e) => {
-            e.preventDefault();
-            setView('alimentacion');
-          }}
+        {/* NavLink añade la clase 'active' automáticamente */}
+        <NavLink 
+          to="/alimentacion" 
+          className={({ isActive }) => (isActive ? 'active' : '')}
         >
-          {/* Usamos emojis para los iconos */}
           🍎 Alimentación Saludable
-        </a>
-        <a
-          href="#"
-          className={view === 'rutinas' ? 'active' : ''}
-          onClick={(e) => {
-            e.preventDefault();
-            setView('rutinas');
-          }}
+        </NavLink>
+        <NavLink 
+          to="/rutinas" 
+          className={({ isActive }) => (isActive ? 'active' : '')}
         >
           💪 Rutinas de Ejercicio
-        </a>
-        <a
-          href="#"
-          className={view === 'progreso' ? 'active' : ''}
-          onClick={(e) => {
-            e.preventDefault();
-            setView('progreso');
-          }}
+        </NavLink>
+        <NavLink 
+          to="/progreso" 
+          className={({ isActive }) => (isActive ? 'active' : '')}
         >
           📊 Mi Progreso
-        </a>
+        </NavLink>
       </nav>
     </header>
   );
