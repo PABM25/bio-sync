@@ -1,186 +1,260 @@
 // src/store/appStore.js
 import { create } from 'zustand';
 import { getTodayName, getChallengeDay, resetChallengeDate } from '../utils/dateUtils';
+// --- Importaciones de Firebase ---
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"; // 'writeBatch' no se usó, se elimina
+import { firestore } from '../firebaseConfig';
+import { useAuthStore } from './authStore'; // Importamos el authStore
 
-// Claves para LocalStorage
+// --- INICIO DE LA CORRECCIÓN ---
+// Claves para los campos en Firestore (reemplazan las claves de LocalStorage)
 const PLAN_ALIMENTACION_KEY = 'miPlanAlimentacion';
 const PLAN_RUTINA_KEY = 'miRutinaEjercicios';
-const PROGRESO_KEY = 'progresoActividades';
+// --- FIN DE LA CORRECCIÓN ---
 
-// --- Funciones Auxiliares de LocalStorage ---
+/* NOTA: Hemos eliminado TODAS las referencias a 'localStorage'.
+  El estado ahora se inicializa vacío y se cargará desde Firestore.
+*/
 
-// VV FUNCIÓN CORREGIDA VV
-// Función auxiliar para cargar desde LocalStorage
-const loadFromLocalStorage = (key, defaultValue) => {
-  const storedValue = localStorage.getItem(key);
-  try {
-    const parsed = storedValue ? JSON.parse(storedValue) : defaultValue;
-    
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Si la clave es una de las que esperamos que sea un array,
-    // nos aseguramos de que sea un array. Si no, usamos el valor por defecto.
-    if (key === PLAN_ALIMENTACION_KEY || key === PLAN_RUTINA_KEY) {
-      // Si el dato guardado NO es un array, devuelve el valor por defecto (un array vacío)
-      return Array.isArray(parsed) ? parsed : defaultValue;
-    }
-    // --- FIN DE LA CORRECCIÓN ---
+// --- Funciones Auxiliares de Firestore ---
 
-    // Devuelve otros valores (como el objeto de progreso)
-    return parsed;
+// Función para cargar los datos del usuario desde Firestore
+const loadDataFromFirestore = async (uid) => {
+  if (!uid) return { initialPlanAlimentacion: [], initialRutinaEjercicios: [], initialProgreso: {} };
 
-  } catch (error) {
-    // Si el JSON.parse falla (ej. datos corruptos), devuelve el valor por defecto
-    console.error(`Error loading ${key} from localStorage:`, error);
-    return defaultValue;
+  const docRef = doc(firestore, "userProgress", uid);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    // Devolvemos los datos con los valores por defecto si no existen
+    return {
+      initialPlanAlimentacion: data.miPlanAlimentacion || [],
+      initialRutinaEjercicios: data.miRutinaEjercicios || [],
+      initialProgreso: data.progreso || { vasosDeAgua: 0 },
+    };
+  } else {
+    // Si el documento no existe, creamos uno básico
+    console.log("No existe documento para el usuario, creando uno nuevo...");
+    const initialData = {
+      miPlanAlimentacion: [],
+      miRutinaEjercicios: [],
+      progreso: {
+        comidasPlanificadas: 0,
+        ejerciciosProgramados: 0,
+        actividadesCompletadas: 0,
+        vasosDeAgua: 0,
+      }
+    };
+    await setDoc(docRef, initialData);
+    return {
+      initialPlanAlimentacion: initialData.miPlanAlimentacion,
+      initialRutinaEjercicios: initialData.miRutinaEjercicios,
+      initialProgreso: initialData.progreso,
+    };
   }
 };
-// ^^ FUNCIÓN CORREGIDA ^^
 
-const saveToLocalStorage = (key, value) => {
+// Función genérica para guardar un campo específico en Firestore
+const saveDataToFirestore = async (key, value) => {
+  const uid = useAuthStore.getState().user?.uid;
+  if (!uid) return;
+  
+  const docRef = doc(firestore, "userProgress", uid);
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    // Usamos updateDoc para actualizar solo los campos enviados
+    await updateDoc(docRef, {
+      [key]: value
+    });
   } catch (error) {
-    console.error(`Error saving ${key} to localStorage:`, error);
+    console.error(`Error guardando ${key} en Firestore:`, error);
+    // Si falla (ej. el doc no existe), intentamos crearlo con setDoc (merge)
+    await setDoc(docRef, { [key]: value }, { merge: true });
   }
 };
 // --- Fin Funciones Auxiliares ---
 
 
-export const useAppStore = create((set, get) => {
-  
-  // Carga inicial (ahora usa la función corregida)
-  const initialPlanAlimentacion = loadFromLocalStorage(PLAN_ALIMENTACION_KEY, []);
-  const initialRutinaEjercicios = loadFromLocalStorage(PLAN_RUTINA_KEY, []);
-  const initialProgreso = loadFromLocalStorage(PROGRESO_KEY, {
+export const useAppStore = create((set, get) => ({
+  // --- Estado ---
+  challengeDay: getChallengeDay(),
+  todayName: getTodayName(),
+  miPlanAlimentacion: [], // Inicia vacío
+  miRutinaEjercicios: [], // Inicia vacío
+  progreso: {
     comidasPlanificadas: 0,
     ejerciciosProgramados: 0,
     actividadesCompletadas: 0,
-    vasosDeAgua: 0, // ¡NUEVO!
-  });
+    vasosDeAgua: 0,
+  }, // Inicia vacío
+  isStoreLoading: true, // Estado para saber si el store está cargando datos de FS
 
-  // Recalcula los contadores al cargar la app
-  // Esta línea ahora es segura gracias a la función corregida
-  initialProgreso.comidasPlanificadas = initialPlanAlimentacion.length;
-  initialProgreso.ejerciciosProgramados = initialRutinaEjercicios.length;
-  initialProgreso.actividadesCompletadas = 
-    initialPlanAlimentacion.filter(c => c.completed).length + 
-    initialRutinaEjercicios.filter(r => r.completed).length;
+  // --- Acciones (Mutaciones del estado) ---
+
+  // NUEVA ACCIÓN: Cargar datos cuando el usuario inicia sesión
+  fetchUserData: async (uid) => {
+    set({ isStoreLoading: true });
+    const { initialPlanAlimentacion, initialRutinaEjercicios, initialProgreso } = await loadDataFromFirestore(uid);
+    
+    // Recalcula los contadores al cargar
+    initialProgreso.comidasPlanificadas = initialPlanAlimentacion.length;
+    initialProgreso.ejerciciosProgramados = initialRutinaEjercicios.length;
+    initialProgreso.actividadesCompletadas = 
+      initialPlanAlimentacion.filter(c => c.completed).length + 
+      initialRutinaEjercicios.filter(r => r.completed).length;
+
+    set({ 
+      miPlanAlimentacion: initialPlanAlimentacion,
+      miRutinaEjercicios: initialRutinaEjercicios,
+      progreso: initialProgreso,
+      isStoreLoading: false 
+    });
+  },
+
+  // NUEVA ACCIÓN: Limpiar datos cuando el usuario cierra sesión
+  clearUserData: () => {
+    set({
+      miPlanAlimentacion: [],
+      miRutinaEjercicios: [],
+      progreso: {
+        comidasPlanificadas: 0,
+        ejerciciosProgramados: 0,
+        actividadesCompletadas: 0,
+        vasosDeAgua: 0,
+      },
+      isStoreLoading: true
+    });
+  },
 
 
-  return {
-    // --- Estado ---
-    challengeDay: getChallengeDay(),
-    todayName: getTodayName(),
-    miPlanAlimentacion: initialPlanAlimentacion,
-    miRutinaEjercicios: initialRutinaEjercicios,
-    progreso: initialProgreso,
+  // Función auxiliar para recalcular todo el progreso
+  recalcularProgreso: (comidas, rutinas) => {
+    const comidasPlanificadas = comidas.length;
+    const ejerciciosProgramados = rutinas.length;
+    
+    const comidasCompletadas = comidas.filter(c => c.completed).length;
+    const rutinasCompletadas = rutinas.filter(r => r.completed).length;
+    
+    const newProgreso = {
+      ...get().progreso,
+      comidasPlanificadas: comidasPlanificadas,
+      ejerciciosProgramados: ejerciciosProgramados,
+      actividadesCompletadas: comidasCompletadas + rutinasCompletadas
+    };
+    
+    set({ progreso: newProgreso });
+    // Guardamos el objeto de progreso actualizado
+    saveDataToFirestore('progreso', newProgreso);
+  },
 
-    // --- Acciones (Mutaciones del estado) ---
+  // Acción para añadir texto al plan de alimentación
+  addAlPlanAlimentacion: (texto) => {
+    const newId = new Date().getTime();
+    const newItem = { id: newId, text: texto, completed: false };
+    const newState = [...get().miPlanAlimentacion, newItem];
+    
+    set({ miPlanAlimentacion: newState });
+    saveDataToFirestore(PLAN_ALIMENTACION_KEY, newState); // <-- Ahora funciona
+    get().recalcularProgreso(newState, get().miRutinaEjercicios);
+  },
 
-    // Función auxiliar para recalcular todo el progreso
-    recalcularProgreso: () => {
-      const comidas = get().miPlanAlimentacion;
-      const rutinas = get().miRutinaEjercicios;
+  // Acción para añadir texto a la rutina de ejercicios
+  addAlPlanRutina: (texto) => {
+    const newId = new Date().getTime();
+    const newItem = { id: newId, text: texto, completed: false };
+    const newState = [...get().miRutinaEjercicios, newItem];
+
+    set({ miRutinaEjercicios: newState });
+    saveDataToFirestore(PLAN_RUTINA_KEY, newState); // <-- Ahora funciona
+    get().recalcularProgreso(get().miPlanAlimentacion, newState);
+  },
+
+  // Acción para marcar/desmarcar un ítem
+  togglePlanItem: (tipo, id) => {
+    let key, stateSlice;
+    if (tipo === 'comida') {
+      key = PLAN_ALIMENTACION_KEY; // <-- Ahora funciona
+      stateSlice = 'miPlanAlimentacion';
+    } else if (tipo === 'ejercicio') {
+      key = PLAN_RUTINA_KEY; // <-- Ahora funciona
+      stateSlice = 'miRutinaEjercicios';
+    } else return;
+
+    const newState = get()[stateSlice].map(item =>
+      item.id === id ? { ...item, completed: !item.completed } : item
+    );
+
+    set({ [stateSlice]: newState });
+    saveDataToFirestore(key, newState);
+    
+    if (tipo === 'comida') {
+      get().recalcularProgreso(newState, get().miRutinaEjercicios);
+    } else {
+      get().recalcularProgreso(get().miPlanAlimentacion, newState);
+    }
+  },
+
+  // Acción para el tracker de agua
+  setVasosDeAgua: (cantidad) => {
+    if (cantidad < 0) cantidad = 0;
+    const newProgreso = { ...get().progreso, vasosDeAgua: cantidad };
+    set({ progreso: newProgreso });
+    saveDataToFirestore('progreso', newProgreso);
+  },
+  
+  // Acción para reiniciar el reto
+  reiniciarRetoCompleto: async () => {
+    const uid = useAuthStore.getState().user?.uid;
+    if (!uid) return;
+
+    if (window.confirm("¿Estás seguro de que quieres reiniciar el reto? Se borrará tu progreso y planes de la nube, y volverás al Día 1.")) {
+      resetChallengeDate(); // Resetea el día en localStorage (esto sigue siendo local)
       
-      const comidasPlanificadas = comidas.length;
-      const ejerciciosProgramados = rutinas.length;
-      
-      const comidasCompletadas = comidas.filter(c => c.completed).length;
-      const rutinasCompletadas = rutinas.filter(r => r.completed).length;
-      
-      const newProgreso = {
-        ...get().progreso,
-        comidasPlanificadas: comidasPlanificadas,
-        ejerciciosProgramados: ejerciciosProgramados,
-        actividadesCompletadas: comidasCompletadas + rutinasCompletadas
+      const initialProgreso = { 
+        comidasPlanificadas: 0, 
+        ejerciciosProgramados: 0, 
+        actividadesCompletadas: 0, 
+        vasosDeAgua: 0
       };
       
-      set({ progreso: newProgreso });
-      saveToLocalStorage(PROGRESO_KEY, newProgreso);
-    },
+      // Resetea el estado local en Zustand
+      set({ 
+        challengeDay: 1,
+        progreso: initialProgreso,
+        miPlanAlimentacion: [],
+        miRutinaEjercicios: []
+      });
 
-    // Acción para añadir texto al plan de alimentación
-    addAlPlanAlimentacion: (texto) => {
-      const newId = new Date().getTime(); // ID simple
-      const newItem = { id: newId, text: texto, completed: false };
-      const newState = [...get().miPlanAlimentacion, newItem];
-      
-      set({ miPlanAlimentacion: newState });
-      saveToLocalStorage(PLAN_ALIMENTACION_KEY, newState);
-      get().recalcularProgreso(); // Recalcula
-    },
-
-    // Acción para añadir texto a la rutina de ejercicios
-    addAlPlanRutina: (texto) => {
-      const newId = new Date().getTime(); // ID simple
-      const newItem = { id: newId, text: texto, completed: false };
-      const newState = [...get().miRutinaEjercicios, newItem];
-
-      set({ miRutinaEjercicios: newState });
-      saveToLocalStorage(PLAN_RUTINA_KEY, newState);
-      get().recalcularProgreso(); // Recalcula
-    },
-
-    // ¡NUEVO! Acción para marcar/desmarcar un ítem
-    togglePlanItem: (tipo, id) => {
-      let key, stateSlice;
-      if (tipo === 'comida') {
-        key = PLAN_ALIMENTACION_KEY;
-        stateSlice = 'miPlanAlimentacion';
-      } else if (tipo === 'ejercicio') {
-        key = PLAN_RUTINA_KEY;
-        stateSlice = 'miRutinaEjercicios';
-      } else return;
-
-      // Mapea el array correspondiente y cambia el 'completed' del ítem
-      const newState = get()[stateSlice].map(item =>
-        item.id === id ? { ...item, completed: !item.completed } : item
-      );
-
-      set({ [stateSlice]: newState });
-      saveToLocalStorage(key, newState);
-      get().recalcularProgreso(); // Recalcula
-    },
-
-    // ¡NUEVO! Acción para el tracker de agua
-    setVasosDeAgua: (cantidad) => {
-      if (cantidad < 0) cantidad = 0;
-      const newProgreso = { ...get().progreso, vasosDeAgua: cantidad };
-      set({ progreso: newProgreso });
-      saveToLocalStorage(PROGRESO_KEY, newProgreso);
-    },
-    
-    // Acción para limpiar los planes
-    clearPlanes: () => {
-      if (window.confirm("¿Vaciar 'Mi Plan de Alimentación' y 'Mi Rutina de Ejercicios'?")) {
-        set({ miPlanAlimentacion: [], miRutinaEjercicios: [] });
-        localStorage.removeItem(PLAN_ALIMENTACION_KEY);
-        localStorage.removeItem(PLAN_RUTINA_KEY);
-        get().recalcularProgreso(); // Recalcula
-      }
-    },
-
-    // Acción para reiniciar el reto
-    reiniciarRetoCompleto: () => {
-      if (window.confirm("¿Estás seguro de que quieres reiniciar el reto? Se borrará tu progreso y planes guardados, y volverás al Día 1.")) {
-        resetChallengeDate();
-        const initialProgreso = { 
-          comidasPlanificadas: 0, 
-          ejerciciosProgramados: 0, 
-          actividadesCompletadas: 0, 
-          vasosDeAgua: 0
-        };
-        set({ 
-          challengeDay: 1,
+      // Resetea los datos en Firestore
+      try {
+        const docRef = doc(firestore, "userProgress", uid);
+        await setDoc(docRef, {
           progreso: initialProgreso,
           miPlanAlimentacion: [],
           miRutinaEjercicios: []
         });
-        localStorage.removeItem(PROGRESO_KEY);
-        localStorage.removeItem(PLAN_ALIMENTACION_KEY);
-        localStorage.removeItem(PLAN_RUTINA_KEY);
         window.location.reload();
+      } catch (error) {
+        console.error("Error al reiniciar el reto en Firestore:", error);
       }
     }
-  };
-});
+  }
+}));
+
+// --- Conexión entre Stores (MUY IMPORTANTE) ---
+// Hacemos que el authStore escuche los cambios del appStore
+
+useAuthStore.subscribe(
+  (state) => state.user, // Escuchamos solo al 'user'
+  (user, prevUser) => {
+    if (user && !prevUser) {
+      // El usuario acaba de iniciar sesión
+      // Llamamos a la acción de appStore para cargar sus datos
+      useAppStore.getState().fetchUserData(user.uid);
+    } else if (!user && prevUser) {
+      // El usuario acaba de cerrar sesión
+      // Limpiamos los datos de appStore
+      useAppStore.getState().clearUserData();
+    }
+  }
+);

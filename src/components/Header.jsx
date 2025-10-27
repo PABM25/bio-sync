@@ -1,12 +1,13 @@
 // src/components/Header.jsx
 import React from 'react';
-import { NavLink } from 'react-router-dom'; // Importa NavLink
+import { NavLink } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore'; // <-- Importa authStore
 
-// Ya no necesita recibir 'view' ni 'setView'
 function Header() {
+  const handleSignOut = useAuthStore((state) => state.handleSignOut); // <-- Obtiene la acción
+
   return (
     <header className="app-header-container">
-      {/* 1. Barra superior (Logo e Info) */}
       <div className="app-header-top">
         <div className="logo-container">
           <span className="logo-icon">🥗</span>
@@ -15,32 +16,30 @@ function Header() {
             <div className="logo-subtitle">Tu asistente personal de salud</div>
           </div>
         </div>
-        <div className="status-indicator">
-          <span className="status-dot"></span>
-          IA Activa
-        </div>
+        
+        {/* Botón de Cerrar Sesión */}
+        <button 
+          onClick={handleSignOut} 
+          className="btn-reset-challenge" // Reutilizamos el estilo del botón
+          style={{ marginTop: 0, padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+        >
+          Cerrar Sesión
+        </button>
       </div>
 
-      {/* 2. Barra de Navegación con NavLink */}
       <nav className="app-nav">
-        {/* NavLink añade la clase 'active' automáticamente */}
-        <NavLink 
-          to="/alimentacion" 
-          className={({ isActive }) => (isActive ? 'active' : '')}
-        >
-          🍎 Alimentación Saludable
-        </NavLink>
-        <NavLink 
-          to="/rutinas" 
-          className={({ isActive }) => (isActive ? 'active' : '')}
-        >
-          💪 Rutinas de Ejercicio
-        </NavLink>
-        <NavLink 
-          to="/progreso" 
-          className={({ isActive }) => (isActive ? 'active' : '')}
-        >
+        <NavLink to="/progreso" className={({ isActive }) => (isActive ? 'active' : '')}>
           📊 Mi Progreso
+        </NavLink>
+        <NavLink to="/alimentacion" className={({ isActive }) => (isActive ? 'active' : '')}>
+          🍎 Alimentación
+        </NavLink>
+        <NavLink to="/rutinas" className={({ isActive }) => (isActive ? 'active' : '')}>
+          💪 Rutinas
+        </NavLink>
+        {/* --- NUEVO ENLACE --- */}
+        <NavLink to="/bienestar" className={({ isActive }) => (isActive ? 'active' : '')}>
+          🧘‍♀️ Bienestar
         </NavLink>
       </nav>
     </header>

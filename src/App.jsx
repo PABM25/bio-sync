@@ -1,49 +1,67 @@
 // src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react'; // <-- Importa useEffect
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Importa los componentes y vistas
-import Header from './components/Header'; // Asegúrate que la ruta sea correcta
+import Header from './components/Header';
 import ProgresoView from './views/ProgresoView';
 import AlimentacionView from './views/AlimentacionView';
 import RutinasView from './views/RutinasView';
+import AuthView from './views/AuthView'; // <-- Importa la vista de Auth
+import BienestarView from './views/BienestarView'; // <-- Importa la vista de Bienestar
 
-// Importa el hook del store de Zustand (pero ya no necesitamos leer todo aquí)
-// import { useAppStore } from './store/appStore'; // <-- Ya no es necesario importar aquí si no se usa
+// Importa el hook del store de Autenticación
+import { useAuthStore } from './store/authStore';
 
 function App() {
-  // Ya NO necesitamos obtener challengeDay ni todayName aquí
-  // const challengeDay = useAppStore((state) => state.challengeDay); // <--- LÍNEA ELIMINADA
-  // const todayName = useAppStore((state) => state.todayName);      // <--- LÍNEA ELIMINADA
+  // Obtiene el estado de autenticación
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const checkAuthState = useAuthStore((state) => state.checkAuthState);
+
+  // Comprueba el estado de autenticación al cargar la app
+  useEffect(() => {
+    checkAuthState();
+  }, [checkAuthState]);
+
+  // Muestra un 'cargando' mientras se verifica la sesión
+  if (isLoading) {
+    return <h2 style={{ color: 'white', textAlign: 'center', marginTop: '5rem' }}>Cargando...</h2>;
+  }
 
   return (
-    <Router> {/* Envuelve todo en el Router */}
+    <Router>
       <div className="app-container">
+        
+        {/* El Header solo se muestra si el usuario está logueado */}
+        {user && <Header />}
 
-        {/* El Header ahora estará presente en todas las rutas */}
-        <Header />
-
-        {/* El contenido principal cambia según la ruta */}
         <main className="main-content">
-          <Routes> {/* Define las rutas */}
-            <Route
-              path="/progreso"
-              element={<ProgresoView />} // Las vistas obtienen los datos del store internamente
-            />
-            <Route
-              path="/alimentacion"
-              element={<AlimentacionView />} // Ya no necesitan props
-            />
-            <Route
-              path="/rutinas"
-              element={<RutinasView />} // Ya no necesitan props
-            />
-            {/* Ruta por defecto: redirige a /progreso */}
-            <Route
-              path="/"
-              element={<Navigate replace to="/progreso" />}
-            />
-             {/* Opcional: Ruta para página no encontrada */}
+          <Routes>
+            {/* Si el usuario está logueado */}
+            {user ? (
+              <>
+                <Route path="/progreso" element={<ProgresoView />} />
+                <Route path="/alimentacion" element={<AlimentacionView />} />
+                <Route path="/rutinas" element={<RutinasView />} />
+                <Route path="/bienestar" element={<BienestarView />} /> {/* <-- Nueva Ruta */}
+                
+                {/* Redirige la raíz a /progreso si está logueado */}
+                <Route path="/" element={<Navigate replace to="/progreso" />} />
+                
+                {/* Si está logueado e intenta ir a /auth, lo mandamos a progreso */}
+                <Route path="/auth" element={<Navigate replace to="/progreso" />} />
+              </>
+            ) : (
+              // Si el usuario NO está logueado
+              <>
+                <Route path="/auth" element={<AuthView />} />
+                {/* Cualquier otra ruta lo redirige a /auth */}
+                <Route path="*" element={<Navigate replace to="/auth" />} />
+              </>
+            )}
+            
+            {/* Página no encontrada genérica (aunque la lógica anterior ya cubre todo) */}
             <Route path="*" element={<h2 style={{ color: 'white', textAlign: 'center', marginTop: '2rem' }}>Página no encontrada</h2>} />
           </Routes>
         </main>
