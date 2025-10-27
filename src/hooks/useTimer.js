@@ -1,13 +1,38 @@
 // src/hooks/useTimer.js
 import { useState, useEffect, useRef } from 'react';
 
-// Función para formatear el tiempo (MM:SS) - movida aquí
+// Función para formatear el tiempo (MM:SS)
 export const formatTime = (seconds) => {
   if (typeof seconds !== 'number' || seconds < 0) return "00:00";
   const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60); // Usar floor por si acaso
+  const secs = Math.floor(seconds % 60);
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
+
+// --- ¡NUEVO! Función de sonido ---
+const playBeep = () => {
+  try {
+    // Intenta usar la API de Audio moderna
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'sine'; // Tono simple
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // Frecuencia (A5)
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Volumen
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5); // Duración de 0.5s
+  } catch (e) {
+    console.error("AudioContext no soportado.", e);
+    console.log("¡Tiempo!"); // Fallback para navegadores antiguos
+  }
+};
+// --- Fin de la función de sonido ---
+
 
 export const useTimer = (initialMinutes = 5) => {
   const initialSeconds = initialMinutes * 60;
@@ -22,9 +47,11 @@ export const useTimer = (initialMinutes = 5) => {
           if (prevSeconds <= 1) {
             clearInterval(intervalRef.current);
             setIsRunning(false);
-            // Podríamos pasar una función onComplete como prop al hook
-            // onComplete?.(); 
-            alert("¡Tiempo!"); // Placeholder
+            
+            // --- INICIO DE LA MEJORA ---
+            playBeep(); // Llama a la función de sonido en lugar del alert
+            // --- FIN DE LA MEJORA ---
+
             return 0;
           }
           return prevSeconds - 1;
@@ -34,11 +61,10 @@ export const useTimer = (initialMinutes = 5) => {
       clearInterval(intervalRef.current);
     }
 
-    return () => clearInterval(intervalRef.current); // Limpieza al desmontar
-  }, [isRunning]);
+    return () => clearInterval(intervalRef.current);
+  }, [isRunning]); // Dependencia sin cambios
 
   const startPause = () => {
-    // No iniciar si ya está en 0
     if (!isRunning && secondsLeft <= 0) return; 
     setIsRunning(!isRunning);
   };
@@ -49,7 +75,7 @@ export const useTimer = (initialMinutes = 5) => {
   };
 
   const setTime = (minutes) => {
-     setIsRunning(false); // Detiene si estaba corriendo
+     setIsRunning(false);
      setSecondsLeft(minutes * 60);
   }
 
@@ -58,6 +84,6 @@ export const useTimer = (initialMinutes = 5) => {
     isRunning,
     startPause,
     reset,
-    setTime, // Nueva función para presets
+    setTime,
   };
 };

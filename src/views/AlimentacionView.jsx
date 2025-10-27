@@ -1,40 +1,33 @@
 // src/views/AlimentacionView.jsx
 import React, { useState } from 'react';
-import Widget from '../components/Widget'; // Ajusta la ruta si moviste Widget
+import Widget from '../components/Widget';
 import { PLAN_PILAR_COMIDAS } from '../data';
-import { useAppStore } from '../store/appStore'; // Importa el hook del store
+import { useAppStore } from '../store/appStore';
 
 function AlimentacionView() {
   // Obtenemos estado y acciones del store
   const todayName = useAppStore((state) => state.todayName);
   const miPlanAlimentacion = useAppStore((state) => state.miPlanAlimentacion);
   const addAlPlanAlimentacion = useAppStore((state) => state.addAlPlanAlimentacion);
-  const incrementarProgreso = useAppStore((state) => state.incrementarProgreso);
+  const togglePlanItem = useAppStore((state) => state.togglePlanItem); // ¡NUEVO!
 
-  // Estado local solo para el input de comida personalizada
   const [comidaPersonalizada, setComidaPersonalizada] = useState('');
-
-  // Busca la comida de hoy
   const comidaHoy = PLAN_PILAR_COMIDAS.find(p => p.dia === todayName) || PLAN_PILAR_COMIDAS[0];
 
   // Handler para agregar sugerencia
   const handleAgregarSugerencia = (tipoComida, comidaTexto) => {
     addAlPlanAlimentacion(`${tipoComida}: ${comidaTexto}`);
-    incrementarProgreso('comida'); // Incrementa contador de comidas planificadas
-     console.log(`"${tipoComida}" agregada al plan.`); // Feedback simple
+    // Ya no se necesita 'incrementarProgreso'
   };
 
   // Handler para agregar comida personalizada
   const handleAgregarPersonalizada = () => {
     if (comidaPersonalizada.trim()) {
       addAlPlanAlimentacion(comidaPersonalizada);
-      incrementarProgreso('comida');
-      setComidaPersonalizada(''); // Limpia input
-      console.log(`Comida personalizada agregada.`);
+      setComidaPersonalizada('');
     }
   };
   
-   // Control de errores básicos
    if (!comidaHoy) {
      return <Widget title="Error">⚠️ No se pudo cargar el plan de alimentación.</Widget>;
    }
@@ -80,10 +73,30 @@ function AlimentacionView() {
       </Widget>
 
       <Widget title="📝 Mi Plan de Alimentación">
+        {/* --- INICIO DE LA MEJORA --- */}
         <div className="my-plan-display">
-          {/* Muestra el plan desde el store */}
-          {miPlanAlimentacion || <p className="widget-placeholder">Agrega comidas aquí...</p>}
+          {miPlanAlimentacion.length === 0 ? (
+            <p className="widget-placeholder">Agrega comidas aquí...</p>
+          ) : (
+            <ul className="plan-list">
+              {miPlanAlimentacion.map((item) => (
+                <li key={item.id}>
+                  <input
+                    type="checkbox"
+                    id={`comida-${item.id}`}
+                    checked={item.completed}
+                    onChange={() => togglePlanItem('comida', item.id)}
+                  />
+                  <label htmlFor={`comida-${item.id}`} className={item.completed ? 'completed' : ''}>
+                    {item.text}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
+        {/* --- FIN DE LA MEJORA --- */}
+        
         <p style={{marginTop: '1rem', textAlign:'center', color: '#555', fontSize: '0.9rem'}}>O crea tu propio plan personalizado:</p>
         <div className="plan-input-wrapper">
           <textarea

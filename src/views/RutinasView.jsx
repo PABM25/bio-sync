@@ -1,51 +1,42 @@
 // src/views/RutinasView.jsx
 import React, { useState } from 'react';
-import Widget from '../components/Widget'; // Ajusta ruta
+import Widget from '../components/Widget';
 import { PLAN_TORO_RUTINAS } from '../data';
-import { useAppStore } from '../store/appStore'; // Importa store
-import { useTimer } from '../hooks/useTimer'; // Importa hook del timer
+import { useAppStore } from '../store/appStore';
+import { useTimer } from '../hooks/useTimer';
 
 function RutinasView() {
   // Estado y acciones del store
   const challengeDay = useAppStore((state) => state.challengeDay);
   const miRutinaEjercicios = useAppStore((state) => state.miRutinaEjercicios);
   const addAlPlanRutina = useAppStore((state) => state.addAlPlanRutina);
-  const incrementarProgreso = useAppStore((state) => state.incrementarProgreso);
+  const togglePlanItem = useAppStore((state) => state.togglePlanItem); // ¡NUEVO!
 
-  // Estado local solo para el input
   const [ejercicioPersonalizado, setEjercicioPersonalizado] = useState('');
+  const { timeLeftFormatted, isRunning, startPause, reset, setTime } = useTimer(5);
 
-  // Usamos el hook del timer
-  const { timeLeftFormatted, isRunning, startPause, reset, setTime } = useTimer(5); // Inicia en 5 min
-
-  // Lógica para encontrar rutinas (igual que antes)
-   const rutinaHoy = PLAN_TORO_RUTINAS.find(r => r.dia === challengeDay) || PLAN_TORO_RUTINAS[0];
-   const rutinaMananaIndex = challengeDay % PLAN_TORO_RUTINAS.length; // Índice para mañana (0 a 44)
-   const rutinaPasadoIndex = (challengeDay + 1) % PLAN_TORO_RUTINAS.length; // Índice para pasado (0 a 44)
-   
-   const rutinaManana = PLAN_TORO_RUTINAS[rutinaMananaIndex];
-   const rutinaPasado = PLAN_TORO_RUTINAS[rutinaPasadoIndex];
-
+  // Lógica para encontrar rutinas
+  const rutinaHoy = PLAN_TORO_RUTINAS.find(r => r.dia === challengeDay) || PLAN_TORO_RUTINAS[0];
+  const rutinaMananaIndex = challengeDay % PLAN_TORO_RUTINAS.length;
+  const rutinaPasadoIndex = (challengeDay + 1) % PLAN_TORO_RUTINAS.length;
+  const rutinaManana = PLAN_TORO_RUTINAS[rutinaMananaIndex];
+  const rutinaPasado = PLAN_TORO_RUTINAS[rutinaPasadoIndex];
 
   // Handler para agregar rutina sugerida
   const handleAgregarRutina = (rutina) => {
     const texto = `Día ${rutina.dia}: ${rutina.titulo}`;
     addAlPlanRutina(texto);
-    incrementarProgreso('ejercicio'); // Incrementa contador de ejercicios
-    console.log(`Rutina "${texto}" agregada a Mi Rutina.`);
+    // Ya no se necesita 'incrementarProgreso'
   };
 
   // Handler para agregar ejercicio personalizado
   const handleAgregarPersonalizado = () => {
     if (ejercicioPersonalizado.trim()) {
       addAlPlanRutina(ejercicioPersonalizado);
-      incrementarProgreso('ejercicio');
       setEjercicioPersonalizado('');
-      console.log(`Ejercicio personalizado agregado.`);
     }
   };
   
-   // Control de errores básicos
    if (!rutinaHoy || !rutinaManana || !rutinaPasado) {
      return <Widget title="Error">⚠️ No se pudieron cargar las rutinas.</Widget>;
    }
@@ -84,7 +75,6 @@ function RutinasView() {
         </button>
       </Widget>
 
-      {/* Widget del Timer usando el hook */}
       <Widget title="⏱️ Timer de Entrenamiento">
         <div className="timer-display">{timeLeftFormatted}</div>
         <div className="timer-buttons">
@@ -94,7 +84,6 @@ function RutinasView() {
           <button className="btn-timer reset" onClick={() => reset(5)}>Reset (5min)</button>
         </div>
         <div className="timer-presets">
-          {/* Usamos setTime para los presets */}
           <button className="btn-preset" onClick={() => setTime(5)}>5 min</button>
           <button className="btn-preset" onClick={() => setTime(10)}>10 min</button>
           <button className="btn-preset" onClick={() => setTime(15)}>15 min</button>
@@ -102,12 +91,31 @@ function RutinasView() {
         </div>
       </Widget>
 
-      {/* Widget Mi Rutina */}
       <Widget title="📝 Mi Rutina de Ejercicios">
+        {/* --- INICIO DE LA MEJORA --- */}
         <div className="my-plan-display">
-           {/* Muestra rutina desde el store */}
-           {miRutinaEjercicios || <p className="widget-placeholder">Agrega rutinas o ejercicios aquí...</p>}
+           {miRutinaEjercicios.length === 0 ? (
+             <p className="widget-placeholder">Agrega rutinas o ejercicios aquí...</p>
+           ) : (
+            <ul className="plan-list">
+              {miRutinaEjercicios.map((item) => (
+                <li key={item.id}>
+                  <input
+                    type="checkbox"
+                    id={`rutina-${item.id}`}
+                    checked={item.completed}
+                    onChange={() => togglePlanItem('ejercicio', item.id)}
+                  />
+                  <label htmlFor={`rutina-${item.id}`} className={item.completed ? 'completed' : ''}>
+                    {item.text}
+                  </label>
+                </li>
+              ))}
+            </ul>
+           )}
         </div>
+        {/* --- FIN DE LA MEJORA --- */}
+
         <p style={{marginTop: '1rem', textAlign:'center', color: '#555', fontSize: '0.9rem'}}>O crea tu rutina personalizada:</p>
         <div className="plan-input-wrapper">
           <textarea

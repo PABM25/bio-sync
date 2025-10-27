@@ -382,3 +382,85 @@ body {
   cursor: pointer;
   display: inline-block; /* Para centrar si el widget es text-align: center */
 }
+
+
+/* === ESTILOS AÑADIDOS PARA LAS MEJORAS === */
+
+/* 1. Estilos para las listas de planes (comidas/rutinas) */
+.plan-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  max-height: 400px; /* Altura máxima para evitar que sea muy largo */
+  overflow-y: auto; /* Scroll si es necesario */
+}
+
+.plan-list li {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.plan-list li:last-child {
+  border-bottom: none;
+}
+
+.plan-list input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  flex-shrink: 0; /* Evita que el checkbox se encoja */
+  cursor: pointer;
+}
+
+.plan-list label {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-break: break-word; /* Para que el texto largo se ajuste */
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+/* Estilo para el texto tachado */
+.plan-list label.completed {
+  text-decoration: line-through;
+  color: #999;
+}
+
+
+/* 2. Estilos para el Widget de Hidratación */
+.hydration-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.hydration-buttons button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%; /* Botones redondos */
+  border: none;
+  background-color: var(--accent-blue);
+  color: white;
+  font-size: 2rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1; /* Ajuste para centrar el +/- */
+  transition: background-color 0.2s;
+}
+.hydration-buttons button:hover {
+  background-color: #0056b3;
+}
+/* Botón de restar */
+.hydration-buttons button:first-child {
+  background-color: #f0f7ff;
+  color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
+}
+.hydration-buttons button:first-child:hover {
+  background-color: #e0ecf8;
+}

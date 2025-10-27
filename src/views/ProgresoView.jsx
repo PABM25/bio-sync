@@ -1,19 +1,28 @@
 // src/views/ProgresoView.jsx
 import React from 'react';
-import Widget from '../components/Widget'; // Ajusta ruta si es necesario
-import { useAppStore } from '../store/appStore'; // Importa store
+import Widget from '../components/Widget';
+import { useAppStore } from '../store/appStore';
 
 function ProgresoView() {
   // Obtenemos datos y acción del store
   const challengeDay = useAppStore((state) => state.challengeDay);
-  const { comidasPlanificadas, ejerciciosProgramados, actividadesCompletadas } = useAppStore((state) => state.progreso);
+  const { comidasPlanificadas, ejerciciosProgramados, actividadesCompletadas, vasosDeAgua } = useAppStore((state) => state.progreso); // vasosDeAgua ¡NUEVO!
   const reiniciarRetoCompleto = useAppStore((state) => state.reiniciarRetoCompleto);
-  // const clearPlanes = useAppStore((state) => state.clearPlanes); // <--- LÍNEA ELIMINADA
+  const setVasosDeAgua = useAppStore((state) => state.setVasosDeAgua); // ¡NUEVO!
 
   return (
     <>
       <div className="progreso-summary-grid">
-        {/* Muestra los contadores del store */}
+        {/* ¡NUEVO WIDGET DE HIDRATACIÓN! */}
+        <Widget title="💧 Hidratación">
+          <div className="stat-number blue">{vasosDeAgua}</div>
+          <p style={{marginTop: '-0.5rem', marginBottom: '1rem', color: '#555'}}>Vasos (250ml)</p>
+          <div className="hydration-buttons">
+            <button onClick={() => setVasosDeAgua(vasosDeAgua - 1)}>-</button>
+            <button onClick={() => setVasosDeAgua(vasosDeAgua + 1)}>+</button>
+          </div>
+        </Widget>
+        
         <Widget title="🍎 Comidas Planificadas">
           <div className="stat-number green">{comidasPlanificadas}</div>
         </Widget>
@@ -29,15 +38,11 @@ function ProgresoView() {
         <p className="widget-placeholder">
           ¡Bienvenido al <strong>Día {challengeDay}</strong> de tu reto!
           <br/>
-          Aquí verás un resumen de tus actividades completadas.
+          Marca tus comidas y rutinas como completadas para ver tu progreso.
         </p>
-
-        {/* Botón para reiniciar */}
         <button className="btn-reset-challenge" onClick={reiniciarRetoCompleto}>
           Reiniciar Reto Completo
         </button>
-        {/* El botón que usaba clearPlanes también se puede eliminar si no se necesita */}
-        {/* <button style={{marginLeft: '1rem'}} onClick={clearPlanes}>Limpiar Planes</button> */}
       </Widget>
     </>
   );
